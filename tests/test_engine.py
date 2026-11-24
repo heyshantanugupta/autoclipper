@@ -90,7 +90,8 @@ def test_watermark_variants(sample, tmp_path):
         assert watermark_png("@brand", "", tmp_path / f"t_{key}.png", key).exists()
     both = Image.open(watermark_png("@brand", str(logo), tmp_path / "both.png", "script"))
     only = Image.open(watermark_png("", str(logo), tmp_path / "only.png"))
-    assert both.height > only.height
+    assert both.width > only.width      # logo and text sit side by side
+    assert both.height <= only.height   # on one line, no taller than the logo alone
     with pytest.raises(EngineError):
         watermark_png("", "", tmp_path / "x.png")
     with pytest.raises(EngineError):

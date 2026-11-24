@@ -253,10 +253,10 @@ def text_png(text: str, path: Path, size: int = 44, font_key: str = "clean") -> 
 
 
 def watermark_png(text: str, logo: str, path: Path, font_key: str = "clean") -> Path:
-    """Build the watermark image from text, a logo file, or both (logo above text)."""
+    """Build the watermark image from text, a logo file, or both (logo and text on one line)."""
     from PIL import Image
-    parts = []
     text, logo = (text or "").strip(), (logo or "").strip()
+    mark = None
     if logo:
         if not Path(logo).is_file():
             raise EngineError("The watermark logo file was not found.")
@@ -264,19 +264,23 @@ def watermark_png(text: str, logo: str, path: Path, font_key: str = "clean") -> 
             im = Image.open(logo).convert("RGBA")
         except Exception:
             raise EngineError("The watermark logo could not be opened. Use a PNG or JPG image.")
-        w = 200 if not text else 150
-        parts.append(im.resize((w, max(1, int(w * im.height / im.width)))))
+        h = 54 if text else 80   # logo height in pixels
+        mark = im.resize((max(1, int(h * im.width / im.height)), h), Image.LANCZOS)
+        if mark.width > 220:
+            mark = mark.resize((220, max(1, int(220 * im.height / im.width))), Image.LANCZOS)
+    words = None
     if text:
-        tp = text_png(text, path, 56 if not logo else 40, font_key)
-        parts.append(Image.open(tp).convert("RGBA"))
-    if not parts:
+        words = Image.open(text_png(text, path, 34 if mark else 52, font_key)).convert("RGBA")
+        words = words.crop(words.getbbox() or (0, 0, words.width, words.height))
+    if mark is None and words is None:
         raise EngineError("No watermark text or logo was given.")
-    width = max(p.width for p in parts)
-    out = Image.new("RGBA", (width, sum(p.height for p in parts)), (0, 0, 0, 0))
-    y = 0
-    for part in parts:
-        out.paste(part, ((width - part.width) // 2, y), part)
-        y += part.height
+    parts = [x for x in (mark, words) if x is not None]
+    gap = 12 if len(parts) == 2 else 0
+    out = Image.new("RGBA", (sum(p.width for p in parts) + gap, max(p.height for p in parts)), (0, 0, 0, 0))
+    x = 0
+    for part in parts:   # same vertical centre, side by side
+        out.paste(part, (x, (out.height - part.height) // 2), part)
+        x += part.width + gap
     out.save(path)
     return path
 

@@ -270,9 +270,14 @@ class App:
         ttk.Entry(box, textvariable=self.tags).grid(row=2, column=1, sticky="ew", padx=6, pady=2)
 
         self.go = tk.Button(body, text="Make clip", command=self.start_job, bg=ACCENT, fg="white",
-                            font=("", 11, "bold"), relief="flat", pady=8, activebackground="#1d4ed8",
+                            font=("", 11, "bold"), relief="flat", pady=10, bd=0, activebackground="#1e40af",
                             activeforeground="white", disabledforeground="#c7d2fe", cursor="hand2")
         self.go.pack(fill="x", pady=(8, 4))
+        self._go_fade = None
+        self.go.bind("<Enter>", lambda _e: self.fade_go("#1d4ed8"))
+        self.go.bind("<Leave>", lambda _e: self.fade_go(ACCENT))
+        self.go.bind("<ButtonPress-1>", lambda _e: self.fade_go("#1e40af", steps=2))
+        self.go.bind("<ButtonRelease-1>", lambda _e: self.fade_go("#1d4ed8", steps=2))
         self.bar = ttk.Progressbar(body, mode="indeterminate")
         self.bar.pack(fill="x")
         self.status = tk.StringVar(value="Ready.")
@@ -308,6 +313,22 @@ class App:
         bf.pack(fill="x")
         ttk.Button(bf, text="Copy description", command=lambda: self.copy(self.draft.get("1.0", "end").strip())).pack(side="left")
         ttk.Button(bf, text="Open upload page", command=self.open_upload).pack(side="left", padx=6)
+
+    def fade_go(self, target: str, steps: int = 6):
+        """Smoothly change the Make clip button colour (hover animation)."""
+        if self.go.cget("state") == "disabled":
+            self.go.configure(bg=ACCENT)
+            return
+        if self._go_fade:
+            self.root.after_cancel(self._go_fade)
+        def rgb(h):
+            return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
+        start, end = rgb(self.go.cget("bg")), rgb(target)
+        def step(i=1):
+            c = tuple(round(a + (b - a) * i / steps) for a, b in zip(start, end))
+            self.go.configure(bg="#%02x%02x%02x" % c)
+            self._go_fade = self.root.after(18, step, i + 1) if i < steps else None
+        step()
 
     def hook_steps(self):
         for v in (self.source, self.mode, self.start, self.end, self.wm_mode, self.wm_text, self.wm_logo, self.caption):
@@ -414,7 +435,7 @@ class App:
                     self.show_update(val)
                 else:
                     self.bar.stop()
-                    self.go.configure(state="normal", text="Make clip")
+                    self.go.configure(state="normal", text="Make clip", bg=ACCENT)
                     if kind == "ok":
                         self.result = val
                         self.refresh_steps()
