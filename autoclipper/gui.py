@@ -442,11 +442,11 @@ class App:
                         self.root.destroy()
                         os._exit(0)
                     except Exception:
-                        webbrowser.open(updates.PAGE)
+                        webbrowser.open(updates.direct_url(self._latest))
                 elif kind == "updfail":
                     msg, btn, later, err = val
-                    msg.configure(text="The update could not be installed. Opening the download page instead.")
-                    webbrowser.open(updates.PAGE)
+                    msg.configure(text="The update could not be installed. Starting the download in your browser instead.")
+                    webbrowser.open(updates.direct_url(self._latest))
                     later.configure(state="normal")
                 else:
                     self.bar.stop()
@@ -479,10 +479,11 @@ class App:
         later = ttk.Button(bar, text="Later", command=bar.destroy)
         later.pack(side="left", padx=6)
         btn.configure(command=lambda: self.start_update(latest, bar, msg, btn, later) if auto
-                      else webbrowser.open(updates.PAGE))
+                      else webbrowser.open(updates.direct_url(latest)))
         bar.pack(fill="x", after=self.top)
 
     def start_update(self, latest, bar, msg, btn, later):
+        self._latest = latest
         name = updates.asset_name(latest)
         dest = Path(tempfile.gettempdir()) / name
         btn.configure(state="disabled")

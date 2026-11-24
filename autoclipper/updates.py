@@ -54,6 +54,12 @@ def asset_url(version: str, name: str) -> str:
     return f"https://github.com/{REPO}/releases/download/v{version}/{name}"
 
 
+def direct_url(version: str) -> str:
+    """The file for this computer if we know it, otherwise the release page."""
+    name = asset_name(version)
+    return asset_url(version, name) if name else PAGE
+
+
 def mac_app_path(executable: str) -> Optional[Path]:
     for p in Path(executable).parents:
         if p.suffix == ".app":
