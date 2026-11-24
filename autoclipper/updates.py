@@ -72,7 +72,7 @@ def can_self_update() -> bool:
     if not getattr(sys, "frozen", False) or asset_name("0") is None:
         return False
     if sys.platform == "win32":
-        return os.access(Path(sys.executable).parent, os.W_OK)
+        return True   # if the swap fails we fall back to a browser download
     app = mac_app_path(sys.executable)
     return bool(app) and os.access(app.parent, os.W_OK)
 
