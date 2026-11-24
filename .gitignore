@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+build/
+dist/
+*.spec
+.pytest_cache/
+# never commit login keys or videos
+cookies*.txt
+*.mp4
+*.mov
+*.mkv
+_sources/
