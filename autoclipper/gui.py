@@ -100,7 +100,7 @@ class App:
     def __init__(self):
         self.root = TkinterDnD.Tk() if HAVE_DND else tk.Tk()
         self.root.title(f"AutoClipper {__version__}")
-        self.root.geometry("900x920")
+        self.root.geometry("900x950")
         try:
             from .engine import ASSETS
             self._icon = tk.PhotoImage(file=str(ASSETS / "icon.png"))
@@ -124,6 +124,14 @@ class App:
         tk.Label(top, text="AutoClipper", bg=ACCENT, fg="white", font=("", 16, "bold")).pack(side="left", padx=14, pady=10)
         tk.Label(top, text="link or video in, ready-to-post short out", bg=ACCENT, fg="#dbe7ff").pack(side="left")
         ttk.Button(top, text="Settings", command=lambda: SettingsDialog(self)).pack(side="right", padx=12)
+
+        foot = ttk.Frame(root, padding=(14, 4))
+        foot.pack(side="bottom", fill="x")
+        ttk.Separator(root).pack(side="bottom", fill="x")
+        ttk.Label(foot, text=f"Made by Shantanu Gupta   v{__version__}", foreground="#666").pack(side="left")
+        lic = ttk.Label(foot, text="MIT License", foreground="#2563eb", cursor="hand2")
+        lic.pack(side="right")
+        lic.bind("<Button-1>", lambda _e: webbrowser.open("https://github.com/heyshantanugupta/autoclipper/blob/main/LICENSE"))
 
         body = ttk.Frame(root, padding=(14, 8))
         body.pack(fill="both", expand=True)
