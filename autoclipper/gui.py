@@ -58,7 +58,7 @@ class SettingsDialog(tk.Toplevel):
         ttk.Separator(f).grid(row=r, columnspan=3, sticky="ew", pady=8)
         r += 1
         ttk.Label(f, text="Signed-in downloads (for private or adult-flagged posts)",
-                  font=("", 9, "bold")).grid(row=r, columnspan=3, sticky="w")
+                  font=("", 10, "bold")).grid(row=r, columnspan=3, sticky="w")
         r += 1
         ttk.Label(f, text="Use cookies from browser").grid(row=r, column=0, sticky="w", pady=4)
         ttk.Combobox(f, textvariable=self.vars["cookies_browser"], values=BROWSERS, width=16,
@@ -115,11 +115,37 @@ class App:
         self.result: Result | None = None
         self.platform: str | None = None
         self.build()
+        self.hook_steps()
         self.root.after(100, self.poll)
         threading.Thread(target=self.check_updates, daemon=True).start()
 
     # ---------- layout ----------
+    def sect(self, parent, n: int, title: str):
+        lbl = ttk.Label(parent, text=f"{n}  {title}")
+        self.steps[n] = (lbl, title)
+        return ttk.LabelFrame(parent, labelwidget=lbl, padding=8)
+
+    def set_step(self, n: int, done: bool):
+        lbl, title = self.steps[n]
+        if done:
+            lbl.configure(text=f"\u2713  {title}", foreground="#15803d", font=("", 10, "bold"))
+        else:
+            lbl.configure(text=f"{n}  {title}", foreground="", font="TkDefaultFont")
+
+    def refresh_steps(self, *_):
+        src = bool(self.source.get().strip())
+        wm = WM_MODES[self.wm_mode.get()]
+        need_text = wm in ("text", "both") and not self.wm_text.get().strip()
+        need_logo = wm in ("logo", "both") and not self.wm_logo.get().strip()
+        trim_bad = self.mode.get() == "trim" and not (self.start.get().strip() and self.end.get().strip())
+        self.set_step(1, src)
+        self.set_step(2, src and not trim_bad)
+        self.set_step(3, src and not need_text and not need_logo)
+        self.set_step(4, src and bool(self.caption.get().strip()))
+        self.set_step(5, self.result is not None)
+
     def build(self):
+        self.steps = {}
         root = self.root
         top = self.top = tk.Frame(root, bg=ACCENT)
         top.pack(fill="x")
@@ -150,7 +176,7 @@ class App:
         body.pack(fill="both", expand=True)
 
         # 1 source
-        box = ttk.LabelFrame(body, text="1  Video", padding=8)
+        box = self.sect(body, 1, "Video")
         box.pack(fill="x", pady=4)
         row = ttk.Frame(box)
         row.pack(fill="x")
@@ -169,7 +195,7 @@ class App:
                 w.dnd_bind("<<Drop>>", self.on_drop)
 
         # 2 length
-        box = ttk.LabelFrame(body, text="2  Clip length", padding=8)
+        box = self.sect(body, 2, "Clip length")
         box.pack(fill="x", pady=4)
         self.mode = tk.StringVar(value="whole")
         self.secs = tk.IntVar(value=59)
@@ -188,7 +214,7 @@ class App:
                         value="auto").grid(row=2, column=0, columnspan=5, sticky="w")
 
         # 3 format
-        box = ttk.LabelFrame(body, text="3  Format", padding=8)
+        box = self.sect(body, 3, "Format")
         box.pack(fill="x", pady=4)
         row1 = ttk.Frame(box)
         row1.pack(fill="x")
@@ -228,7 +254,7 @@ class App:
         self.update_wm_fields()
 
         # 4 text
-        box = ttk.LabelFrame(body, text="4  Caption and credit", padding=8)
+        box = self.sect(body, 4, "Caption and credit")
         box.pack(fill="x", pady=4)
         box.columnconfigure(1, weight=1)
         self.caption, self.credit = tk.StringVar(), tk.StringVar()
@@ -245,7 +271,7 @@ class App:
 
         self.go = tk.Button(body, text="Make clip", command=self.start_job, bg=ACCENT, fg="white",
                             font=("", 11, "bold"), relief="flat", pady=8, activebackground="#1d4ed8",
-                            activeforeground="white")
+                            activeforeground="white", disabledforeground="#c7d2fe", cursor="hand2")
         self.go.pack(fill="x", pady=(8, 4))
         self.bar = ttk.Progressbar(body, mode="indeterminate")
         self.bar.pack(fill="x")
@@ -253,7 +279,7 @@ class App:
         ttk.Label(body, textvariable=self.status, wraplength=840, justify="left").pack(anchor="w", pady=4)
 
         # 5 drafts
-        box = ttk.LabelFrame(body, text="5  Post draft: pick where you're posting", padding=8)
+        box = self.sect(body, 5, "Post draft: pick where you're posting")
         box.pack(fill="both", expand=True, pady=4)
         pf = ttk.Frame(box)
         pf.pack(fill="x")
@@ -270,18 +296,23 @@ class App:
         self.thumb.pack(side="left", fill="y", padx=(0, 10))
         right = ttk.Frame(mid)
         right.pack(side="left", fill="both", expand=True)
-        tr = ttk.Frame(right)
-        tr.pack(fill="x", pady=(0, 2))
+        tr = self.title_row = ttk.Frame(right)
         ttk.Label(tr, text="Title").pack(side="left")
         self.draft_title = tk.StringVar()
         ttk.Entry(tr, textvariable=self.draft_title).pack(side="left", fill="x", expand=True, padx=6)
         ttk.Button(tr, text="Copy", command=lambda: self.copy(self.draft_title.get())).pack(side="left")
         self.draft = tk.Text(right, height=8, wrap="word")
         self.draft.pack(fill="both", expand=True, pady=4)
+        self.draft_widget = self.draft
         bf = ttk.Frame(right)
         bf.pack(fill="x")
         ttk.Button(bf, text="Copy description", command=lambda: self.copy(self.draft.get("1.0", "end").strip())).pack(side="left")
         ttk.Button(bf, text="Open upload page", command=self.open_upload).pack(side="left", padx=6)
+
+    def hook_steps(self):
+        for v in (self.source, self.mode, self.start, self.end, self.wm_mode, self.wm_text, self.wm_logo, self.caption):
+            v.trace_add("write", self.refresh_steps)
+        self.refresh_steps()
 
     def update_wm_fields(self):
         mode = WM_MODES[self.wm_mode.get()]
@@ -358,7 +389,8 @@ class App:
             messagebox.showinfo("AutoClipper", "Enter a start and an end time.")
             return
         self.result = None
-        self.go.configure(state="disabled")
+        self.refresh_steps()
+        self.go.configure(state="disabled", text="Making your clip...")
         self.bar.start(12)
         self.status.set("Working...")
         threading.Thread(target=self.work, args=(job,), daemon=True).start()
@@ -382,9 +414,10 @@ class App:
                     self.show_update(val)
                 else:
                     self.bar.stop()
-                    self.go.configure(state="normal")
+                    self.go.configure(state="normal", text="Make clip")
                     if kind == "ok":
                         self.result = val
+                        self.refresh_steps()
                         self.show_thumb(val.path)
                         self.status.set(f"Done: {val.path.name}. Pick a platform below for your post draft.")
                     else:
@@ -419,10 +452,15 @@ class App:
         credit = self.result.credit_name if self.result else self.credit.get()
         title, body = build_draft(platform, self.caption.get(), credit, self.tags.get())
         self.draft_title.set(title)
+        if title:
+            self.title_row.pack(fill="x", pady=(0, 2), before=self.draft)
+        else:
+            self.title_row.pack_forget()
         self.draft.delete("1.0", "end")
         self.draft.insert("1.0", body)
         self.copy(body)
-        self.status.set(f"{platform} draft copied. Paste it into the description box.")
+        where = "title and description" if title else "caption box"
+        self.status.set(f"{platform} draft copied. Paste it into the {where}.")
 
     def open_upload(self):
         if self.platform:
