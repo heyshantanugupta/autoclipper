@@ -16,6 +16,13 @@ cmd = [
     "--collect-all", "tkinterdnd2",
     "--collect-all", "imageio_ffmpeg",
     "--collect-all", "yt_dlp",
+    "--exclude-module", "numpy",
+    "--exclude-module", "matplotlib",
+    "--exclude-module", "scipy",
+    "--exclude-module", "pandas",
+    "--exclude-module", "unittest",
+    "--exclude-module", "pydoc",
+    "--exclude-module", "test",
     "--add-data", f"autoclipper/assets{sep}autoclipper/assets",
     "run.py",
 ]

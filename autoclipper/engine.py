@@ -5,6 +5,7 @@ downloading is done with the yt-dlp Python API, so users install nothing else.
 """
 from __future__ import annotations
 
+import math
 import os
 import re
 import shutil
@@ -15,7 +16,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
 
-import numpy as np
 
 ASSETS = Path(__file__).resolve().parent / "assets"
 FALLBACK_FONTS = ["C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/arial.ttf",
@@ -104,24 +104,30 @@ def thumbnail(path: Path, height: int = 300) -> Optional[bytes]:
 
 
 # ---------- finding the best moment ----------
-def audio_levels(path: Path) -> np.ndarray:
-    """Loudness (RMS) per second."""
+def audio_levels(path: Path) -> list[float]:
+    """Loudness (RMS) per second, lightly smoothed."""
+    from array import array
     r = subprocess.run([ffmpeg_exe(), "-v", "error", "-i", str(path), "-vn", "-ac", "1",
                         "-ar", "8000", "-f", "s16le", "-"], capture_output=True,
                        creationflags=NO_WINDOW)
-    x = np.frombuffer(r.stdout, dtype=np.int16).astype(np.float32) / 32768.0
+    x = array("h")
+    x.frombytes(r.stdout[: len(r.stdout) // 2 * 2])
     n = len(x) // 8000
     if n == 0:
-        return np.zeros(0)
-    rms = np.sqrt((x[: n * 8000].reshape(n, 8000) ** 2).mean(axis=1))
-    return np.convolve(rms, np.ones(3) / 3, mode="same")
+        return []
+    rms = []
+    for i in range(n):
+        chunk = x[i * 8000:(i + 1) * 8000]
+        rms.append(math.sqrt(sum(v * v for v in chunk) / 8000) / 32768.0)
+    pad = [0.0] + rms + [0.0]
+    return [(pad[i] + pad[i + 1] + pad[i + 2]) / 3 for i in range(n)]
 
 
-def best_moment(levels: np.ndarray, length: int) -> tuple[float, float]:
+def best_moment(levels: list[float], length: int) -> tuple[float, float]:
     """Start/end of a `length`-second window around the loudest second."""
-    if len(levels) == 0 or levels.max() <= 0:
+    if len(levels) == 0 or max(levels) <= 0:
         return 0.0, float(length)
-    peak = int(np.argmax(levels))
+    peak = max(range(len(levels)), key=levels.__getitem__)
     pre = int(length * 0.55)
     start = max(0, min(peak - pre, max(0, len(levels) - length)))
     return float(start), float(start + length)

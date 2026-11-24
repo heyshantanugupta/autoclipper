@@ -1,5 +1,4 @@
 yt-dlp
 imageio-ffmpeg
 pillow
-numpy
 tkinterdnd2

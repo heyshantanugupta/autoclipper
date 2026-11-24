@@ -127,11 +127,11 @@ class App:
             from PIL import Image
             import io
             from .engine import ASSETS
-            im = Image.open(ASSETS / "icon.png").convert("RGBA").resize((36, 36), Image.LANCZOS)
+            im = Image.open(ASSETS / "icon.png").convert("RGBA").resize((26, 26), Image.LANCZOS)
             buf = io.BytesIO()
             im.save(buf, "PNG")
             self._logo = tk.PhotoImage(data=base64.b64encode(buf.getvalue()))
-            tk.Label(top, image=self._logo, bg=ACCENT).pack(side="left", padx=(14, 0), pady=8)
+            tk.Label(top, image=self._logo, bg=ACCENT).pack(side="left", padx=(14, 0), pady=10)
         except Exception:
             pass
         tk.Label(top, text="AutoClipper", bg=ACCENT, fg="white", font=("", 16, "bold")).pack(side="left", padx=(8, 14), pady=10)
