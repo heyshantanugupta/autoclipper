@@ -40,7 +40,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-14
+          - os: macos-latest
             tag: mac-arm64
           - os: macos-15-intel
             tag: mac-x64
