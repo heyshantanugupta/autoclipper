@@ -12,6 +12,7 @@ sep = os.pathsep
 cmd = [
     sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "--onefile", "--windowed",
     "--name", "AutoClipper",
+    "--icon", "autoclipper/assets/icon.ico" if sys.platform == "win32" else "autoclipper/assets/icon.png",
     "--collect-all", "tkinterdnd2",
     "--collect-all", "imageio_ffmpeg",
     "--collect-all", "yt_dlp",

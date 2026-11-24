@@ -101,6 +101,12 @@ class App:
         self.root = TkinterDnD.Tk() if HAVE_DND else tk.Tk()
         self.root.title(f"AutoClipper {__version__}")
         self.root.geometry("900x920")
+        try:
+            from .engine import ASSETS
+            self._icon = tk.PhotoImage(file=str(ASSETS / "icon.png"))
+            self.root.iconphoto(True, self._icon)
+        except Exception:
+            pass
         self.root.minsize(760, 760)
         ttk.Style(self.root).theme_use("clam")
         self.settings = cfg.load()

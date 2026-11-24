@@ -1,11 +1,14 @@
 <div align="center">
 
+<img src="autoclipper/assets/icon.png" alt="AutoClipper logo" width="88">
+
 # AutoClipper
 
 **Turn any video link into a ready-to-post short**
 
 Paste a link or drop a video. Pick a platform. Get a clip and a post draft for YouTube, TikTok, Instagram and X.
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-0f8a76)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Windows%20and%20macOS-0f8a76)
 ![No install](https://img.shields.io/badge/install-none-12b5a2)
 ![Built in](https://img.shields.io/badge/ffmpeg%20%2B%20downloader-built%20in-e5407e)
@@ -88,3 +91,7 @@ python build.py        # build dist/AutoClipper.exe (Windows) or AutoClipper.app
 ```
 
 Python and tkinter, with yt-dlp, ffmpeg (via imageio-ffmpeg) and Pillow. Pushing a tag like `v0.1.0` builds the exe on GitHub Actions and attaches it to a release.
+
+---
+
+<p align="center">Made by Shantanu Gupta &middot; <a href="LICENSE">MIT License</a></p>
