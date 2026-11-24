@@ -25,7 +25,10 @@ def default_out_dir() -> Path:
 @dataclass
 class Settings:
     out_dir: str = ""
-    watermark: str = ""            # text or path to a logo image
+    watermark_mode: str = "off"    # off, text, logo, both
+    watermark_text: str = ""
+    watermark_logo: str = ""
+    watermark_font: str = "clean"
     hashtags: str = "#gaming"
     cookies_browser: str = ""      # firefox, edge, chrome, brave...
     cookies_file: str = ""

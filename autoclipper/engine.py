@@ -214,10 +214,19 @@ def download(url: str, work: Path, name: str, log: Log, *, section: tuple[float,
 
 
 # ---------- overlays ----------
+FONTS = {  # key -> (label shown in the app, bundled file)
+    "clean": ("Clean", "Poppins-Bold.ttf"),
+    "bold": ("Bold", "Anton-Regular.ttf"),
+    "gaming": ("Gaming", "Bangers-Regular.ttf"),
+    "script": ("Script", "Pacifico-Regular.ttf"),
+}
+
+
 def _font(size: int, kind: str = "clean"):
     from PIL import ImageFont
-    pref = ASSETS / "fonts" / ("Anton-Regular.ttf" if kind == "display" else "Poppins-Bold.ttf")
-    for f in [str(pref), *FALLBACK_FONTS]:
+    kind = "bold" if kind == "display" else kind
+    name = FONTS.get(kind, FONTS["clean"])[1]
+    for f in [str(ASSETS / "fonts" / name), *FALLBACK_FONTS]:
         try:
             return ImageFont.truetype(f, size)
         except OSError:
@@ -225,28 +234,45 @@ def _font(size: int, kind: str = "clean"):
     return ImageFont.load_default()
 
 
-def text_png(text: str, path: Path, size: int = 44) -> Path:
+def text_png(text: str, path: Path, size: int = 44, font_key: str = "clean") -> Path:
     from PIL import Image, ImageDraw
-    font = _font(size)
+    font = _font(size, font_key)
     l, t, r, b = ImageDraw.Draw(Image.new("RGBA", (1, 1))).textbbox((0, 0), text, font=font)
-    img = Image.new("RGBA", (r - l + 24, b - t + 24), (0, 0, 0, 0))
+    img = Image.new("RGBA", (r - l + 28, b - t + 28), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    d.text((14, 14), text, font=font, fill=(0, 0, 0, 160))
-    d.text((12, 12), text, font=font, fill=(255, 255, 255, 235))
+    d.text((16 - l, 16 - t), text, font=font, fill=(0, 0, 0, 160))
+    d.text((14 - l, 14 - t), text, font=font, fill=(255, 255, 255, 235))
     img.save(path)
     return path
 
 
-def watermark_png(mark: str, path: Path) -> Path:
-    """`mark` is either text or the path of a logo image."""
+def watermark_png(text: str, logo: str, path: Path, font_key: str = "clean") -> Path:
+    """Build the watermark image from text, a logo file, or both (logo above text)."""
     from PIL import Image
-    p = Path(mark)
-    if p.is_file():
-        logo = Image.open(p).convert("RGBA")
-        logo = logo.resize((200, max(1, int(200 * logo.height / logo.width))))
-        logo.save(path)
-        return path
-    return text_png(mark, path, 56)
+    parts = []
+    text, logo = (text or "").strip(), (logo or "").strip()
+    if logo:
+        if not Path(logo).is_file():
+            raise EngineError("The watermark logo file was not found.")
+        try:
+            im = Image.open(logo).convert("RGBA")
+        except Exception:
+            raise EngineError("The watermark logo could not be opened. Use a PNG or JPG image.")
+        w = 200 if not text else 150
+        parts.append(im.resize((w, max(1, int(w * im.height / im.width)))))
+    if text:
+        tp = text_png(text, path, 56 if not logo else 40, font_key)
+        parts.append(Image.open(tp).convert("RGBA"))
+    if not parts:
+        raise EngineError("No watermark text or logo was given.")
+    width = max(p.width for p in parts)
+    out = Image.new("RGBA", (width, sum(p.height for p in parts)), (0, 0, 0, 0))
+    y = 0
+    for part in parts:
+        out.paste(part, ((width - part.width) // 2, y), part)
+        y += part.height
+    out.save(path)
+    return path
 
 
 def hook_png(text: str, path: Path, size: int = 66, width: int = 1000) -> Path:
@@ -340,7 +366,9 @@ class Job:
     aspect: str = "9:16"         # 9:16 | 16:9
     style: str = "frame"         # frame | blur | crop (9:16 only)
     enhance: bool = True
-    watermark: str = ""          # text or logo path; "" = none
+    watermark_text: str = ""
+    watermark_logo: str = ""     # path to a logo image
+    watermark_font: str = "clean"
     caption: str = ""
     show_caption: bool = True
     credit: str = ""             # "" none | "auto" | custom text
@@ -426,7 +454,8 @@ def make_clip(job: Job, log: Log = print) -> Result:
         elif job.credit.strip():
             credit_name = job.credit.strip()
         credit_png = text_png(f"Source: {credit_name}"[:34], tmp / "credit.png") if credit_name else None
-        wm = watermark_png(job.watermark, tmp / "wm.png") if job.watermark.strip() else None
+        wm = (watermark_png(job.watermark_text, job.watermark_logo, tmp / "wm.png", job.watermark_font)
+              if (job.watermark_text.strip() or job.watermark_logo.strip()) else None)
         hook = None
         if job.caption.strip() and job.show_caption and job.aspect == "9:16":
             hook = hook_png(job.caption.strip(), tmp / "hook.png")

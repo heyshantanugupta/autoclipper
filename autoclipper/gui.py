@@ -14,7 +14,8 @@ from tkinter import filedialog, messagebox, ttk
 
 from . import __version__, settings as cfg
 from .drafts import PLATFORMS, build_draft
-from .engine import EngineError, Job, Result, make_clip, thumbnail
+from .engine import FONTS, EngineError, Job, Result, make_clip, thumbnail
+from . import updates
 from .presets import PRESETS
 
 try:
@@ -23,6 +24,8 @@ try:
 except Exception:  # drag and drop is optional
     HAVE_DND = False
 
+WM_MODES = {"Off": "off", "Text": "text", "Logo": "logo", "Text + logo": "both"}
+WM_MODES_REV = {v: k for k, v in WM_MODES.items()}
 STYLES = {"Framed (zoomed)": "frame", "Full video over blur": "blur", "Fill screen (crop)": "crop"}
 BROWSERS = ["", "firefox", "edge", "chrome", "brave", "opera", "vivaldi"]
 ACCENT = "#2563eb"
@@ -38,15 +41,13 @@ class SettingsDialog(tk.Toplevel):
         s = app.settings
         self.vars = {
             "out_dir": tk.StringVar(value=s.out_dir or str(s.output_path)),
-            "watermark": tk.StringVar(value=s.watermark),
             "hashtags": tk.StringVar(value=s.hashtags),
             "cookies_browser": tk.StringVar(value=s.cookies_browser),
             "cookies_file": tk.StringVar(value=s.cookies_file),
         }
         f = ttk.Frame(self, padding=14)
         f.pack()
-        rows = [("Save clips to", "out_dir", "folder"), ("Watermark (text or logo image)", "watermark", "image"),
-                ("Default hashtags", "hashtags", None)]
+        rows = [("Save clips to", "out_dir", "folder"), ("Default hashtags", "hashtags", None)]
         r = 0
         for label, key, browse in rows:
             ttk.Label(f, text=label).grid(row=r, column=0, sticky="w", pady=4)
@@ -86,13 +87,11 @@ class SettingsDialog(tk.Toplevel):
     def save(self):
         s = self.app.settings
         s.out_dir = self.vars["out_dir"].get().strip()
-        s.watermark = self.vars["watermark"].get().strip()
         s.hashtags = self.vars["hashtags"].get().strip()
         s.cookies_browser = self.vars["cookies_browser"].get()
         s.cookies_file = self.vars["cookies_file"].get().strip()
         cfg.save(s)
         self.app.tags.set(s.hashtags)
-        self.app.wm.set(bool(s.watermark))
         self.destroy()
 
 
@@ -100,11 +99,13 @@ class App:
     def __init__(self):
         self.root = TkinterDnD.Tk() if HAVE_DND else tk.Tk()
         self.root.title(f"AutoClipper {__version__}")
-        self.root.geometry("900x950")
+        self.root.geometry("900x985")
         try:
             from .engine import ASSETS
             self._icon = tk.PhotoImage(file=str(ASSETS / "icon.png"))
             self.root.iconphoto(True, self._icon)
+            if sys.platform == "win32":
+                self.root.iconbitmap(str(ASSETS / "icon.ico"))
         except Exception:
             pass
         self.root.minsize(760, 760)
@@ -115,13 +116,25 @@ class App:
         self.platform: str | None = None
         self.build()
         self.root.after(100, self.poll)
+        threading.Thread(target=self.check_updates, daemon=True).start()
 
     # ---------- layout ----------
     def build(self):
         root = self.root
-        top = tk.Frame(root, bg=ACCENT)
+        top = self.top = tk.Frame(root, bg=ACCENT)
         top.pack(fill="x")
-        tk.Label(top, text="AutoClipper", bg=ACCENT, fg="white", font=("", 16, "bold")).pack(side="left", padx=14, pady=10)
+        try:
+            from PIL import Image
+            import io
+            from .engine import ASSETS
+            im = Image.open(ASSETS / "icon.png").convert("RGBA").resize((36, 36), Image.LANCZOS)
+            buf = io.BytesIO()
+            im.save(buf, "PNG")
+            self._logo = tk.PhotoImage(data=base64.b64encode(buf.getvalue()))
+            tk.Label(top, image=self._logo, bg=ACCENT).pack(side="left", padx=(14, 0), pady=8)
+        except Exception:
+            pass
+        tk.Label(top, text="AutoClipper", bg=ACCENT, fg="white", font=("", 16, "bold")).pack(side="left", padx=(8, 14), pady=10)
         tk.Label(top, text="link or video in, ready-to-post short out", bg=ACCENT, fg="#dbe7ff").pack(side="left")
         ttk.Button(top, text="Settings", command=lambda: SettingsDialog(self)).pack(side="right", padx=12)
 
@@ -177,20 +190,42 @@ class App:
         # 3 format
         box = ttk.LabelFrame(body, text="3  Format", padding=8)
         box.pack(fill="x", pady=4)
+        row1 = ttk.Frame(box)
+        row1.pack(fill="x")
         self.preset = tk.StringVar(value="Custom")
-        pre = ttk.Combobox(box, textvariable=self.preset, state="readonly", width=14, values=list(PRESETS))
+        pre = ttk.Combobox(row1, textvariable=self.preset, state="readonly", width=14, values=list(PRESETS))
         pre.pack(side="left", padx=(0, 8))
         pre.bind("<<ComboboxSelected>>", self.apply_preset)
         self.aspect = tk.StringVar(value="Short (9:16)")
-        ttk.Combobox(box, textvariable=self.aspect, state="readonly", width=15,
+        ttk.Combobox(row1, textvariable=self.aspect, state="readonly", width=15,
                      values=["Short (9:16)", "Widescreen (16:9)"]).pack(side="left")
         self.style = tk.StringVar(value=list(STYLES)[0])
-        ttk.Combobox(box, textvariable=self.style, state="readonly", width=24,
+        ttk.Combobox(row1, textvariable=self.style, state="readonly", width=24,
                      values=list(STYLES)).pack(side="left", padx=8)
         self.enhance = tk.BooleanVar(value=True)
-        ttk.Checkbutton(box, text="Enhance colors", variable=self.enhance).pack(side="left")
-        self.wm = tk.BooleanVar(value=bool(self.settings.watermark))
-        ttk.Checkbutton(box, text="Watermark", variable=self.wm).pack(side="left", padx=8)
+        ttk.Checkbutton(row1, text="Enhance colors", variable=self.enhance).pack(side="left")
+
+        row2 = ttk.Frame(box)
+        row2.pack(fill="x", pady=(8, 0))
+        st = self.settings
+        ttk.Label(row2, text="Watermark").pack(side="left")
+        self.wm_mode = tk.StringVar(value=WM_MODES_REV.get(st.watermark_mode, "Off"))
+        mode = ttk.Combobox(row2, textvariable=self.wm_mode, state="readonly", width=12, values=list(WM_MODES))
+        mode.pack(side="left", padx=6)
+        self.wm_text = tk.StringVar(value=st.watermark_text)
+        self.wm_text_e = ttk.Entry(row2, textvariable=self.wm_text, width=16)
+        self.wm_text_e.pack(side="left")
+        self.wm_font = tk.StringVar(value=FONTS.get(st.watermark_font, FONTS["clean"])[0])
+        self.wm_font_c = ttk.Combobox(row2, textvariable=self.wm_font, state="readonly", width=8,
+                                      values=[v[0] for v in FONTS.values()])
+        self.wm_font_c.pack(side="left", padx=6)
+        self.wm_logo = tk.StringVar(value=st.watermark_logo)
+        self.wm_logo_e = ttk.Entry(row2, textvariable=self.wm_logo, width=18)
+        self.wm_logo_e.pack(side="left")
+        self.wm_logo_b = ttk.Button(row2, text="Logo...", command=self.pick_logo)
+        self.wm_logo_b.pack(side="left", padx=6)
+        mode.bind("<<ComboboxSelected>>", lambda _e: self.update_wm_fields())
+        self.update_wm_fields()
 
         # 4 text
         box = ttk.LabelFrame(body, text="4  Caption and credit", padding=8)
@@ -248,6 +283,26 @@ class App:
         ttk.Button(bf, text="Copy description", command=lambda: self.copy(self.draft.get("1.0", "end").strip())).pack(side="left")
         ttk.Button(bf, text="Open upload page", command=self.open_upload).pack(side="left", padx=6)
 
+    def update_wm_fields(self):
+        mode = WM_MODES[self.wm_mode.get()]
+        use_text, use_logo = mode in ("text", "both"), mode in ("logo", "both")
+        self.wm_text_e.configure(state="normal" if use_text else "disabled")
+        self.wm_font_c.configure(state="readonly" if use_text else "disabled")
+        self.wm_logo_e.configure(state="normal" if use_logo else "disabled")
+        self.wm_logo_b.configure(state="normal" if use_logo else "disabled")
+
+    def pick_logo(self):
+        p = filedialog.askopenfilename(filetypes=[("Image", "*.png *.jpg *.jpeg"), ("All", "*.*")])
+        if p:
+            self.wm_logo.set(p)
+
+    def watermark_args(self):
+        mode = WM_MODES[self.wm_mode.get()]
+        key = next((k for k, v in FONTS.items() if v[0] == self.wm_font.get()), "clean")
+        text = self.wm_text.get().strip() if mode in ("text", "both") else ""
+        logo = self.wm_logo.get().strip() if mode in ("logo", "both") else ""
+        return mode, text, logo, key
+
     def apply_preset(self, _=None):
         p = PRESETS.get(self.preset.get())
         if p:
@@ -280,11 +335,20 @@ class App:
     def start_job(self):
         s = self.settings
         wide = self.aspect.get().startswith("Wide")
+        wmode, wtext, wlogo, wfont = self.watermark_args()
+        if wmode in ("text", "both") and not wtext:
+            messagebox.showinfo("AutoClipper", "Type the watermark text, or set Watermark to Off.")
+            return
+        if wmode in ("logo", "both") and not wlogo:
+            messagebox.showinfo("AutoClipper", "Choose a logo image, or set Watermark to Off.")
+            return
+        s.watermark_mode, s.watermark_text, s.watermark_logo, s.watermark_font = wmode, self.wm_text.get().strip(), self.wm_logo.get().strip(), wfont
+        cfg.save(s)
         job = Job(
             source=self.source.get(), out_dir=s.output_path, mode=self.mode.get(),
             seconds=self.secs.get(), start=self.start.get(), end=self.end.get(),
             aspect="16:9" if wide else "9:16", style=STYLES[self.style.get()],
-            enhance=self.enhance.get(), watermark=s.watermark if self.wm.get() else "",
+            enhance=self.enhance.get(), watermark_text=wtext, watermark_logo=wlogo, watermark_font=wfont,
             caption=self.caption.get(), show_caption=self.show_cap.get(),
             credit=self.credit.get(), cookies_browser=s.cookies_browser, cookies_file=s.cookies_file)
         if not job.source.strip():
@@ -314,6 +378,8 @@ class App:
                 kind, val = self.q.get_nowait()
                 if kind == "log":
                     self.status.set(val)
+                elif kind == "update":
+                    self.show_update(val)
                 else:
                     self.bar.stop()
                     self.go.configure(state="normal")
@@ -327,6 +393,19 @@ class App:
         except queue.Empty:
             pass
         self.root.after(100, self.poll)
+
+    def check_updates(self):
+        latest = updates.latest_version()
+        if latest and updates.is_newer(latest, __version__):
+            self.q.put(("update", latest))
+
+    def show_update(self, latest: str):
+        bar = tk.Frame(self.root, bg="#fff4cc")
+        tk.Label(bar, text=f"A new version of AutoClipper is available (v{latest}).", bg="#fff4cc",
+                 fg="#5a4500").pack(side="left", padx=14, pady=6)
+        ttk.Button(bar, text="Download", command=lambda: webbrowser.open(updates.PAGE)).pack(side="left")
+        ttk.Button(bar, text="Later", command=bar.destroy).pack(side="left", padx=6)
+        bar.pack(fill="x", after=self.top)
 
     def show_thumb(self, path: Path):
         png = thumbnail(path)

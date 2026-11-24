@@ -64,12 +64,13 @@ No Python, no terminal, no setup. Click a button above and the download starts. 
 | **Clip length** | Whole video up to N seconds, a section you pick, or the loudest moment |
 | **Preview** | Thumbnail and one-click play before you post |
 | **Post drafts** | Title, description and viral hashtags for each platform, copied for you |
-| **Watermark** | Your text or logo on every clip |
+| **Watermark** | Your text, your logo, or both, in 4 fonts (Clean, Bold, Gaming, Script) |
+| **Update alerts** | The app tells you when a new version is out |
 | **Enhance colors** | One tick for punchier video |
 
 ## Settings
 
-Open **Settings** to set the save folder, a watermark (text or logo image) and your default hashtags.
+Open **Settings** to set the save folder and your default hashtags. The watermark options are in the Format box on the main screen.
 
 ### Private or adult-flagged posts
 

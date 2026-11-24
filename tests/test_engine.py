@@ -29,7 +29,7 @@ def test_parse_time():
 
 def test_short_9x16(sample, tmp_path):
     res = make_clip(job(sample, tmp_path, seconds=6, caption="Hello world", credit="@me",
-                        watermark="@brand"))
+                        watermark_text="@brand", watermark_font="gaming"))
     w, h, dur = probe(res.path)
     assert (w, h) == (1080, 1920)
     assert 5 < dur < 7
@@ -79,3 +79,21 @@ def test_thumbnail(sample, tmp_path):
     res = make_clip(job(sample, tmp_path, seconds=3))
     png = engine.thumbnail(res.path)
     assert png and png.startswith(b"\x89PNG")
+
+
+def test_watermark_variants(sample, tmp_path):
+    from PIL import Image
+    from autoclipper.engine import FONTS, watermark_png
+    logo = tmp_path / "logo.png"
+    Image.new("RGBA", (300, 100), (255, 0, 0, 255)).save(logo)
+    for key in FONTS:
+        assert watermark_png("@brand", "", tmp_path / f"t_{key}.png", key).exists()
+    both = Image.open(watermark_png("@brand", str(logo), tmp_path / "both.png", "script"))
+    only = Image.open(watermark_png("", str(logo), tmp_path / "only.png"))
+    assert both.height > only.height
+    with pytest.raises(EngineError):
+        watermark_png("", "", tmp_path / "x.png")
+    with pytest.raises(EngineError):
+        watermark_png("", str(tmp_path / "missing.png"), tmp_path / "y.png")
+    res = make_clip(job(sample, tmp_path, seconds=4, caption="Logo", watermark_logo=str(logo), watermark_text="hi"))
+    assert probe(res.path)[:2] == (1080, 1920)
