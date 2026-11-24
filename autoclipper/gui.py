@@ -6,6 +6,7 @@ import os
 import queue
 import subprocess
 import sys
+import tempfile
 import threading
 import tkinter as tk
 import webbrowser
@@ -433,6 +434,20 @@ class App:
                     self.status.set(val)
                 elif kind == "update":
                     self.show_update(val)
+                elif kind == "updprog":
+                    val[0].configure(text=f"Downloading the update... {val[1]}")
+                elif kind == "updready":
+                    try:
+                        updates.install_and_restart(val)
+                        self.root.destroy()
+                        os._exit(0)
+                    except Exception:
+                        webbrowser.open(updates.PAGE)
+                elif kind == "updfail":
+                    msg, btn, later, err = val
+                    msg.configure(text="The update could not be installed. Opening the download page instead.")
+                    webbrowser.open(updates.PAGE)
+                    later.configure(state="normal")
                 else:
                     self.bar.stop()
                     self.go.configure(state="normal", text="Make clip", bg=ACCENT)
@@ -454,12 +469,34 @@ class App:
             self.q.put(("update", latest))
 
     def show_update(self, latest: str):
-        bar = tk.Frame(self.root, bg="#fff4cc")
-        tk.Label(bar, text=f"A new version of AutoClipper is available (v{latest}).", bg="#fff4cc",
-                 fg="#5a4500").pack(side="left", padx=14, pady=6)
-        ttk.Button(bar, text="Download", command=lambda: webbrowser.open(updates.PAGE)).pack(side="left")
-        ttk.Button(bar, text="Later", command=bar.destroy).pack(side="left", padx=6)
+        bg = "#fff4cc"
+        bar = tk.Frame(self.root, bg=bg)
+        msg = tk.Label(bar, text=f"A new version of AutoClipper is available (v{latest}).", bg=bg, fg="#5a4500")
+        msg.pack(side="left", padx=14, pady=6)
+        auto = updates.can_self_update()
+        btn = ttk.Button(bar, text="Update now" if auto else "Download")
+        btn.pack(side="left")
+        later = ttk.Button(bar, text="Later", command=bar.destroy)
+        later.pack(side="left", padx=6)
+        btn.configure(command=lambda: self.start_update(latest, bar, msg, btn, later) if auto
+                      else webbrowser.open(updates.PAGE))
         bar.pack(fill="x", after=self.top)
+
+    def start_update(self, latest, bar, msg, btn, later):
+        name = updates.asset_name(latest)
+        dest = Path(tempfile.gettempdir()) / name
+        btn.configure(state="disabled")
+        later.configure(state="disabled")
+        msg.configure(text="Downloading the update... 0%")
+
+        def work():
+            try:
+                updates.download(updates.asset_url(latest, name), dest,
+                                 lambda f: self.q.put(("updprog", (msg, f"{int(f * 100)}%"))))
+                self.q.put(("updready", dest))
+            except Exception as ex:
+                self.q.put(("updfail", (msg, btn, later, str(ex))))
+        threading.Thread(target=work, daemon=True).start()
 
     def show_thumb(self, path: Path):
         png = thumbnail(path)
