@@ -53,7 +53,8 @@ jobs:
           mkdir -p out
           cp dist/AutoClipper.exe "out/AutoClipper-Portable-$VERSION-windows-x64.exe"
           choco install innosetup -y --no-progress
-          "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" "/DAppVersion=$VERSION" installer/autoclipper.iss
+          # Git Bash rewrites arguments that start with a slash, so turn that off for ISCC.
+          MSYS_NO_PATHCONV=1 "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" "/DAppVersion=$VERSION" "installer\\autoclipper.iss"
           ls -la out
       - name: Mac disk image
         if: runner.os == 'macOS'
