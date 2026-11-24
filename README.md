@@ -16,11 +16,11 @@ Paste a link or drop a video. Pick a platform. Get a clip and a post draft for Y
 
 <br>
 
-<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.6/AutoClipper-Setup-0.1.6-windows-x64.exe"><img alt="Download for Windows" src="https://img.shields.io/badge/Download%20for-Windows-0f8a76?style=for-the-badge"></a>
+<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.7/AutoClipper-Setup-0.1.7-windows-x64.exe"><img alt="Download for Windows" src="https://img.shields.io/badge/Download%20for-Windows-0f8a76?style=for-the-badge"></a>
 &nbsp;
-<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.6/AutoClipper-0.1.6-mac-arm64.dmg"><img alt="Download for Mac, Apple chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Apple%20chip)-12b5a2?style=for-the-badge"></a>
+<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.7/AutoClipper-0.1.7-mac-arm64.dmg"><img alt="Download for Mac, Apple chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Apple%20chip)-12b5a2?style=for-the-badge"></a>
 &nbsp;
-<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.6/AutoClipper-0.1.6-mac-x64.dmg"><img alt="Download for Mac, Intel chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Intel%20chip)-e5407e?style=for-the-badge"></a>
+<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.7/AutoClipper-0.1.7-mac-x64.dmg"><img alt="Download for Mac, Intel chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Intel%20chip)-e5407e?style=for-the-badge"></a>
 
 </div>
 
@@ -33,7 +33,7 @@ No Python, no terminal, no setup. Click a button and the download starts. Not su
 
 Click a button, open the file you downloaded, and follow the prompts. Other options:
 
-- **Windows without installing:** [AutoClipper-Portable-0.1.6-windows-x64.exe](https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.6/AutoClipper-Portable-0.1.6-windows-x64.exe) runs straight from wherever you save it.
+- **Windows without installing:** [AutoClipper-Portable-0.1.7-windows-x64.exe](https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.7/AutoClipper-Portable-0.1.7-windows-x64.exe) runs straight from wherever you save it.
 - **Mac:** open the disk image and drag AutoClipper to Applications.
 - **All versions:** see the [Releases page](https://github.com/heyshantanugupta/autoclipper/releases).
 
