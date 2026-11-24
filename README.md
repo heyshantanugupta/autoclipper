@@ -16,11 +16,11 @@ Paste a link or drop a video. Pick a platform. Get a clip and a post draft for Y
 
 <br>
 
-<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.2/AutoClipper-0.1.2-windows-x64.exe"><img alt="Download for Windows" src="https://img.shields.io/badge/Download%20for-Windows-0f8a76?style=for-the-badge"></a>
+<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.3/AutoClipper-0.1.3-windows-x64.exe"><img alt="Download for Windows" src="https://img.shields.io/badge/Download%20for-Windows-0f8a76?style=for-the-badge"></a>
 &nbsp;
-<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.2/AutoClipper-0.1.2-mac-arm64.zip"><img alt="Download for Mac, Apple chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Apple%20chip)-12b5a2?style=for-the-badge"></a>
+<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.3/AutoClipper-0.1.3-mac-arm64.zip"><img alt="Download for Mac, Apple chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Apple%20chip)-12b5a2?style=for-the-badge"></a>
 &nbsp;
-<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.2/AutoClipper-0.1.2-mac-x64.zip"><img alt="Download for Mac, Intel chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Intel%20chip)-e5407e?style=for-the-badge"></a>
+<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.3/AutoClipper-0.1.3-mac-x64.zip"><img alt="Download for Mac, Intel chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Intel%20chip)-e5407e?style=for-the-badge"></a>
 
 </div>
 
