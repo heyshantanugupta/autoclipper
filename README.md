@@ -6,14 +6,14 @@
 
 Paste a link or drop a video. Pick a platform. Get a clip and a post draft for YouTube, TikTok, Instagram and X.
 
-![Platform](https://img.shields.io/badge/platform-Windows-0f8a76)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-0f8a76)
 ![No install](https://img.shields.io/badge/install-none-12b5a2)
 ![Built in](https://img.shields.io/badge/ffmpeg%20%2B%20downloader-built%20in-e5407e)
 ![You post](https://img.shields.io/badge/you%20post-never%20auto--posts-1a7f64)
 
 <br>
 
-<a href="../../releases/latest"><img alt="Download for Windows" src="https://img.shields.io/badge/Download%20for-Windows-0f8a76?style=for-the-badge"></a>
+<a href="../../releases/latest"><img alt="Download for Windows and Mac" src="https://img.shields.io/badge/Download%20for-Windows%20%7C%20Mac-0f8a76?style=for-the-badge"></a>
 
 </div>
 
@@ -22,10 +22,18 @@ Paste a link or drop a video. Pick a platform. Get a clip and a post draft for Y
 
 ## Download
 
-No Python, no terminal, no setup. Click the button above, open **AutoClipper.exe** and go. ffmpeg and the downloader are built in.
+No Python, no terminal, no setup. Click the button above and pick your file from the latest release. ffmpeg and the downloader are built in.
+
+- **Windows:** `AutoClipper.exe`. Just open it.
+- **Mac, Apple chip (M1 and newer):** `AutoClipper-mac-arm64.zip`. Unzip and open.
+- **Mac, Intel chip:** `AutoClipper-mac-x64.zip`. Unzip and open.
 
 > [!WARNING]
-> The app is not code signed yet, so Windows may show a warning on first launch. Choose **More info**, then **Run anyway**.
+> The apps are not code signed yet, so the first launch shows a warning.
+>
+> **Windows:** choose **More info**, then **Run anyway**.
+>
+> **Mac:** drag AutoClipper to Applications, then in Terminal run `xattr -cr /Applications/AutoClipper.app` and open it normally. Or open **System Settings > Privacy & Security** and click **Open Anyway**.
 
 ## What it looks like
 
@@ -72,7 +80,7 @@ Some posts only download when you are signed in. In Settings, choose the browser
 pip install -r requirements.txt pytest pyinstaller
 python run.py          # run from source
 python -m pytest       # tests
-python build.py        # build dist/AutoClipper.exe (on Windows)
+python build.py        # build dist/AutoClipper.exe (Windows) or AutoClipper.app (Mac)
 ```
 
 Python and tkinter, with yt-dlp, ffmpeg (via imageio-ffmpeg) and Pillow. Pushing a tag like `v0.1.0` builds the exe on GitHub Actions and attaches it to a release.
