@@ -6,7 +6,7 @@
 
 Paste a link or drop a video. Pick a platform. Get a clip and a post draft for YouTube, TikTok, Instagram and X.
 
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-0f8a76)
+![Platform](https://img.shields.io/badge/platform-Windows%20and%20macOS-0f8a76)
 ![No install](https://img.shields.io/badge/install-none-12b5a2)
 ![Built in](https://img.shields.io/badge/ffmpeg%20%2B%20downloader-built%20in-e5407e)
 ![You post](https://img.shields.io/badge/you%20post-never%20auto--posts-1a7f64)
