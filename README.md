@@ -16,11 +16,11 @@ Paste a link or drop a video. Pick a platform. Get a clip and a post draft for Y
 
 <br>
 
-<a href="https://github.com/heyshantanugupta/autoclipper/releases/latest/download/AutoClipper.exe"><img alt="Download for Windows" src="https://img.shields.io/badge/Download%20for-Windows-0f8a76?style=for-the-badge"></a>
+<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.2/AutoClipper-0.1.2-windows-x64.exe"><img alt="Download for Windows" src="https://img.shields.io/badge/Download%20for-Windows-0f8a76?style=for-the-badge"></a>
 &nbsp;
-<a href="https://github.com/heyshantanugupta/autoclipper/releases/latest/download/AutoClipper-mac-arm64.zip"><img alt="Download for Mac, Apple chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Apple%20chip)-12b5a2?style=for-the-badge"></a>
+<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.2/AutoClipper-0.1.2-mac-arm64.zip"><img alt="Download for Mac, Apple chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Apple%20chip)-12b5a2?style=for-the-badge"></a>
 &nbsp;
-<a href="https://github.com/heyshantanugupta/autoclipper/releases/latest/download/AutoClipper-mac-x64.zip"><img alt="Download for Mac, Intel chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Intel%20chip)-e5407e?style=for-the-badge"></a>
+<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.2/AutoClipper-0.1.2-mac-x64.zip"><img alt="Download for Mac, Intel chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Intel%20chip)-e5407e?style=for-the-badge"></a>
 
 </div>
 
@@ -29,11 +29,11 @@ Paste a link or drop a video. Pick a platform. Get a clip and a post draft for Y
 
 ## Download
 
-No Python, no terminal, no setup. Click a button above and the download starts. Not sure which Mac you have? Open the Apple menu, choose About This Mac, and look for "Apple M1" (or newer) or "Intel". ffmpeg and the downloader are built in.
+No Python, no terminal, no setup. Click a button and the download starts. Not sure which Mac you have? Open the Apple menu, choose About This Mac, and look for "Apple M1" (or newer) or "Intel". ffmpeg and the downloader are built in.
 
-- **Windows:** `AutoClipper.exe`. Just open it.
-- **Mac, Apple chip (M1 and newer):** `AutoClipper-mac-arm64.zip`. Unzip and open.
-- **Mac, Intel chip:** `AutoClipper-mac-x64.zip`. Unzip and open.
+- **Windows:** open the `.exe`.
+- **Mac:** unzip and open the app.
+- **All versions:** see the [Releases page](https://github.com/heyshantanugupta/autoclipper/releases).
 
 > [!WARNING]
 > The apps are not code signed yet, so the first launch shows a warning.
