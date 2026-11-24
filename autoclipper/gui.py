@@ -100,7 +100,7 @@ class App:
     def __init__(self):
         self.root = TkinterDnD.Tk() if HAVE_DND else tk.Tk()
         self.root.title(f"AutoClipper {__version__}")
-        self.root.geometry("900x985")
+        self.root.geometry("900x790")
         try:
             from .engine import ASSETS
             self._icon = tk.PhotoImage(file=str(ASSETS / "icon.png"))
@@ -109,7 +109,7 @@ class App:
                 self.root.iconbitmap(str(ASSETS / "icon.ico"))
         except Exception:
             pass
-        self.root.minsize(760, 760)
+        self.root.minsize(640, 480)
         ttk.Style(self.root).theme_use("clam")
         self.settings = cfg.load()
         self.q: queue.Queue = queue.Queue()
@@ -173,8 +173,37 @@ class App:
         lic.pack(side="right")
         lic.bind("<Button-1>", lambda _e: webbrowser.open("https://github.com/heyshantanugupta/autoclipper/blob/main/LICENSE"))
 
-        body = ttk.Frame(root, padding=(14, 8))
-        body.pack(fill="both", expand=True)
+        # scrollable middle, so a small or minimised-and-restored window never hides the bottom
+        wrap = ttk.Frame(root)
+        wrap.pack(fill="both", expand=True)
+        bg = ttk.Style(root).lookup("TFrame", "background") or "#dcdad5"
+        self.canvas = canvas = tk.Canvas(wrap, highlightthickness=0, bd=0, bg=bg)
+        self.vsb = vsb = ttk.Scrollbar(wrap, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=vsb.set)
+        canvas.pack(side="left", fill="both", expand=True)
+        body = ttk.Frame(canvas, padding=(14, 8))
+        win = canvas.create_window((0, 0), window=body, anchor="nw")
+
+        def fit(_e=None):
+            canvas.itemconfigure(win, width=canvas.winfo_width())
+            canvas.configure(scrollregion=(0, 0, 1, body.winfo_reqheight()))
+            if body.winfo_reqheight() > canvas.winfo_height():
+                if not vsb.winfo_ismapped():
+                    vsb.pack(side="right", fill="y", before=canvas)
+            else:
+                vsb.pack_forget()
+                canvas.yview_moveto(0)
+        body.bind("<Configure>", fit)
+        canvas.bind("<Configure>", fit)
+
+        def wheel(e):
+            if isinstance(e.widget, tk.Text) or not vsb.winfo_ismapped():
+                return
+            step = -1 if (getattr(e, "num", 0) == 4 or e.delta > 0) else 1
+            canvas.yview_scroll(step * 3, "units")
+        root.bind_all("<MouseWheel>", wheel)
+        root.bind_all("<Button-4>", wheel)
+        root.bind_all("<Button-5>", wheel)
 
         # 1 source
         box = self.sect(body, 1, "Video")
@@ -188,7 +217,7 @@ class App:
         ttk.Button(row, text="Choose file", command=self.browse).pack(side="left")
         hint = ("Paste a link from YouTube, X, TikTok, Instagram, Twitch, Reddit... or drop a video here"
                 if HAVE_DND else "Paste a link from YouTube, X, TikTok, Instagram, Twitch, Reddit... or choose a file")
-        self.drop = tk.Label(box, text=hint, relief="groove", height=3, bg="#f3f6fb", fg="#445")
+        self.drop = tk.Label(box, text=hint, relief="groove", height=2, bg="#f3f6fb", fg="#445")
         self.drop.pack(fill="x", pady=(6, 0))
         if HAVE_DND:
             for w in (self.drop, self.src_entry):
@@ -307,7 +336,7 @@ class App:
         self.draft_title = tk.StringVar()
         ttk.Entry(tr, textvariable=self.draft_title).pack(side="left", fill="x", expand=True, padx=6)
         ttk.Button(tr, text="Copy", command=lambda: self.copy(self.draft_title.get())).pack(side="left")
-        self.draft = tk.Text(right, height=8, wrap="word")
+        self.draft = tk.Text(right, height=6, wrap="word")
         self.draft.pack(fill="both", expand=True, pady=4)
         self.draft_widget = self.draft
         bf = ttk.Frame(right)
