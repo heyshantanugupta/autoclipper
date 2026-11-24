@@ -39,14 +39,23 @@ def latest_version(timeout: float = 6.0) -> str:
 
 
 # ---------- installing ----------
-def asset_name(version: str, plat: str | None = None, machine: str | None = None) -> Optional[str]:
+def is_installed() -> bool:
+    """True when running from the Windows installer's folder (it leaves unins000.exe next to the app)."""
+    return sys.platform == "win32" and (Path(sys.executable).parent / "unins000.exe").exists()
+
+
+def asset_name(version: str, plat: str | None = None, machine: str | None = None,
+               installed: bool | None = None) -> Optional[str]:
     plat = plat or sys.platform
     machine = (machine or platform.machine()).lower()
     if plat == "win32":
-        return f"AutoClipper-{version}-windows-x64.exe"
+        if installed is None:
+            installed = is_installed()
+        kind = "Setup" if installed else "Portable"
+        return f"AutoClipper-{kind}-{version}-windows-x64.exe"
     if plat == "darwin":
         arch = "arm64" if machine in ("arm64", "aarch64") else "x64"
-        return f"AutoClipper-{version}-mac-{arch}.zip"
+        return f"AutoClipper-{version}-mac-{arch}.dmg"
     return None
 
 
@@ -60,21 +69,9 @@ def direct_url(version: str) -> str:
     return asset_url(version, name) if name else PAGE
 
 
-def mac_app_path(executable: str) -> Optional[Path]:
-    for p in Path(executable).parents:
-        if p.suffix == ".app":
-            return p
-    return None
-
-
 def can_self_update() -> bool:
-    """True only for the packaged app on Windows or Mac, in a place we can write to."""
-    if not getattr(sys, "frozen", False) or asset_name("0") is None:
-        return False
-    if sys.platform == "win32":
-        return True   # if the swap fails we fall back to a browser download
-    app = mac_app_path(sys.executable)
-    return bool(app) and os.access(app.parent, os.W_OK)
+    """Only the packaged Windows app updates itself. On Mac the person drags the new app over the old one."""
+    return bool(getattr(sys, "frozen", False)) and sys.platform == "win32"
 
 
 def download(url: str, dest: Path, progress: Callable[[float], None] = lambda f: None) -> Path:
@@ -96,6 +93,7 @@ def download(url: str, dest: Path, progress: Callable[[float], None] = lambda f:
 
 
 def windows_script(new_exe: Path, current_exe: Path) -> str:
+    """Portable copy: wait for this app to exit, swap the file, start it again."""
     return (
         "@echo off\r\n"
         "set tries=0\r\n"
@@ -113,42 +111,15 @@ def windows_script(new_exe: Path, current_exe: Path) -> str:
     )
 
 
-def mac_script(zip_path: Path, app: Path) -> str:
-    return f"""#!/bin/bash
-sleep 2
-APP="{app}"
-ZIP="{zip_path}"
-TMP="$(mktemp -d)"
-if ditto -x -k "$ZIP" "$TMP" && [ -d "$TMP/AutoClipper.app" ]; then
-  rm -rf "$APP.old"
-  if mv "$APP" "$APP.old"; then
-    if mv "$TMP/AutoClipper.app" "$APP"; then
-      rm -rf "$APP.old"
-    else
-      mv "$APP.old" "$APP"
-    fi
-  fi
-  xattr -cr "$APP" 2>/dev/null
-fi
-rm -rf "$TMP" "$ZIP"
-open "$APP"
-rm -- "$0"
-"""
-
-
 def install_and_restart(downloaded: Path) -> None:
-    """Start a helper that swaps in the new version after this app exits, then reopens it."""
+    """Windows only. Installed copy: run the new Setup quietly (it closes this app, upgrades it
+    in place and reopens it). Portable copy: swap the file after this app exits."""
     env = dict(os.environ, PYINSTALLER_RESET_ENVIRONMENT="1")
-    tmp = Path(tempfile.gettempdir())
-    if sys.platform == "win32":
-        current = Path(sys.executable)
-        bat = tmp / "autoclipper_update.bat"
-        bat.write_text(windows_script(downloaded, current), encoding="utf-8")
-        flags = 0x00000008 | 0x08000000  # DETACHED_PROCESS | CREATE_NO_WINDOW
-        subprocess.Popen(["cmd", "/c", str(bat)], creationflags=flags, env=env, close_fds=True)
-    else:
-        app = mac_app_path(sys.executable)
-        sh = tmp / "autoclipper_update.sh"
-        sh.write_text(mac_script(downloaded, app), encoding="utf-8")
-        sh.chmod(0o755)
-        subprocess.Popen(["/bin/bash", str(sh)], env=env, start_new_session=True, close_fds=True)
+    flags = 0x00000008 | 0x08000000  # DETACHED_PROCESS | CREATE_NO_WINDOW
+    if is_installed():
+        subprocess.Popen([str(downloaded), "/SILENT", "/CLOSEAPPLICATIONS", "/SUPPRESSMSGBOXES"],
+                         creationflags=flags, env=env, close_fds=True)
+        return
+    bat = Path(tempfile.gettempdir()) / "autoclipper_update.bat"
+    bat.write_text(windows_script(downloaded, Path(sys.executable)), encoding="utf-8")
+    subprocess.Popen(["cmd", "/c", str(bat)], creationflags=flags, env=env, close_fds=True)

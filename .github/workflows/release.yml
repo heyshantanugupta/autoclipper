@@ -24,11 +24,10 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            file: AutoClipper-VERSION-windows-x64.exe
           - os: macos-15
-            file: AutoClipper-VERSION-mac-arm64.zip
+            file: AutoClipper-VERSION-mac-arm64.dmg
           - os: macos-15-intel
-            file: AutoClipper-VERSION-mac-x64.zip
+            file: AutoClipper-VERSION-mac-x64.dmg
     runs-on: ${{ matrix.os }}
     env:
       TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
@@ -47,12 +46,24 @@ jobs:
       - run: python -m pip install -r requirements.txt pyinstaller pytest
       - run: python -m pytest -q
       - run: python build.py
-      - name: Name the file
+      - name: Windows installer and portable file
+        if: runner.os == 'Windows'
         shell: bash
         run: |
-          mkdir out
+          mkdir -p out
+          cp dist/AutoClipper.exe "out/AutoClipper-Portable-$VERSION-windows-x64.exe"
+          choco install innosetup -y --no-progress
+          "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" "/DAppVersion=$VERSION" installer/autoclipper.iss
+          ls -la out
+      - name: Mac disk image
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          mkdir -p out dmgroot
+          cp -R dist/AutoClipper.app dmgroot/
+          ln -s /Applications dmgroot/Applications
           NAME="${{ matrix.file }}"; NAME="${NAME/VERSION/$VERSION}"
-          if [ "$RUNNER_OS" = "Windows" ]; then cp dist/AutoClipper.exe "out/$NAME"; else ditto -c -k --keepParent dist/AutoClipper.app "out/$NAME"; fi
+          hdiutil create -volname AutoClipper -srcfolder dmgroot -ov -format UDZO "out/$NAME"
       - uses: actions/upload-artifact@v4
         with:
           name: AutoClipper-${{ matrix.os }}
@@ -88,7 +99,7 @@ jobs:
       - name: Update download links
         run: |
           export VERSION="${TAG#v}"
-          perl -pi -e 's{releases/(?:latest/download|download/[^/]+)/}{releases/download/$ENV{TAG}/}g; s{AutoClipper-(?:[\d.]+-)?windows-}{AutoClipper-$ENV{VERSION}-windows-}g; s{AutoClipper-(?:[\d.]+-)?mac-}{AutoClipper-$ENV{VERSION}-mac-}g' README.md
+          perl -pi -e 's{releases/(?:latest/download|download/[^/]+)/}{releases/download/$ENV{TAG}/}g; s{AutoClipper-(Setup|Portable)-(?:[\d.]+-)?windows-}{AutoClipper-$1-$ENV{VERSION}-windows-}g; s{AutoClipper-(?:[\d.]+-)?mac-}{AutoClipper-$ENV{VERSION}-mac-}g' README.md
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add README.md

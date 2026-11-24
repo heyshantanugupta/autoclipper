@@ -16,11 +16,11 @@ Paste a link or drop a video. Pick a platform. Get a clip and a post draft for Y
 
 <br>
 
-<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.6/AutoClipper-0.1.6-windows-x64.exe"><img alt="Download for Windows" src="https://img.shields.io/badge/Download%20for-Windows-0f8a76?style=for-the-badge"></a>
+<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.6/AutoClipper-Setup-0.1.6-windows-x64.exe"><img alt="Download for Windows" src="https://img.shields.io/badge/Download%20for-Windows-0f8a76?style=for-the-badge"></a>
 &nbsp;
-<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.6/AutoClipper-0.1.6-mac-arm64.zip"><img alt="Download for Mac, Apple chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Apple%20chip)-12b5a2?style=for-the-badge"></a>
+<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.6/AutoClipper-0.1.6-mac-arm64.dmg"><img alt="Download for Mac, Apple chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Apple%20chip)-12b5a2?style=for-the-badge"></a>
 &nbsp;
-<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.6/AutoClipper-0.1.6-mac-x64.zip"><img alt="Download for Mac, Intel chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Intel%20chip)-e5407e?style=for-the-badge"></a>
+<a href="https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.6/AutoClipper-0.1.6-mac-x64.dmg"><img alt="Download for Mac, Intel chip" src="https://img.shields.io/badge/Download%20for-Mac%20(Intel%20chip)-e5407e?style=for-the-badge"></a>
 
 </div>
 
@@ -31,16 +31,26 @@ Paste a link or drop a video. Pick a platform. Get a clip and a post draft for Y
 
 No Python, no terminal, no setup. Click a button and the download starts. Not sure which Mac you have? Open the Apple menu, choose About This Mac, and look for "Apple M1" (or newer) or "Intel". ffmpeg and the downloader are built in.
 
-- **Windows:** open the `.exe`.
-- **Mac:** unzip and open the app.
+Click a button, open the file you downloaded, and follow the prompts. Other options:
+
+- **Windows without installing:** [AutoClipper-Portable-0.1.6-windows-x64.exe](https://github.com/heyshantanugupta/autoclipper/releases/download/v0.1.6/AutoClipper-Portable-0.1.6-windows-x64.exe) runs straight from wherever you save it.
+- **Mac:** open the disk image and drag AutoClipper to Applications.
 - **All versions:** see the [Releases page](https://github.com/heyshantanugupta/autoclipper/releases).
 
 > [!WARNING]
-> The apps are not code signed yet, so the first launch shows a warning.
+> The apps are not code signed yet (that costs the developer a yearly fee), so the first launch shows a warning. AutoClipper is open source, so you can read every line of it here. The warning is expected and appears once per install.
 >
 > **Windows:** choose **More info**, then **Run anyway**.
 >
-> **Mac:** drag AutoClipper to Applications, then in Terminal run `xattr -cr /Applications/AutoClipper.app` and open it normally. Or open **System Settings > Privacy & Security** and click **Open Anyway**.
+> **Mac:** drag AutoClipper to Applications and open it. Click **Done** on the warning, then open **System Settings > Privacy & Security**, scroll down to the message about AutoClipper and click **Open Anyway**. Or open **Terminal**, paste this and press Enter, then open the app normally:
+>
+> ```bash
+> xattr -cr /Applications/AutoClipper.app
+> ```
+
+### Updating
+
+When a new version is out, a yellow bar appears at the top of the app. On Windows, **Update now** downloads and installs it, then reopens AutoClipper. On Mac, **Download** opens the new disk image: drag it over the old app. Your settings are kept.
 
 ## What it looks like
 
