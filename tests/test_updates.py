@@ -31,7 +31,7 @@ def test_scripts_mention_paths():
     w = windows_script(Path("C:/t/new.exe"), Path("C:/Apps/AutoClipper.exe"))
     assert "new.exe" in w and "AutoClipper.exe" in w and "start" in w
     m = mac_script(Path("/tmp/u.zip"), Path("/Applications/AutoClipper.app"))
-    assert "/Applications/AutoClipper.app" in m and "open" in m and ".old" in m
+    assert str(Path("/Applications/AutoClipper.app")) in m and "open" in m and ".old" in m
 
 
 def test_download_and_incomplete(tmp_path):
