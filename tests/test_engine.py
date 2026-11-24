@@ -73,3 +73,9 @@ def test_bad_inputs(tmp_path):
         make_clip(job(tmp_path / "missing.mp4", tmp_path))
     with pytest.raises(EngineError):
         make_clip(job("x.mp4", tmp_path, mode="trim", start="0:10", end="0:05"))
+
+
+def test_thumbnail(sample, tmp_path):
+    res = make_clip(job(sample, tmp_path, seconds=3))
+    png = engine.thumbnail(res.path)
+    assert png and png.startswith(b"\x89PNG")

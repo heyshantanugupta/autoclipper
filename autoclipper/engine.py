@@ -92,6 +92,17 @@ def probe(path: Path) -> tuple[Optional[int], Optional[int], Optional[float]]:
     return w, h, dur
 
 
+def thumbnail(path: Path, height: int = 300) -> Optional[bytes]:
+    """PNG bytes of a frame from the clip, for the preview."""
+    for t in ("1", "0"):
+        r = subprocess.run([ffmpeg_exe(), "-v", "error", "-ss", t, "-i", str(path), "-frames:v", "1",
+                            "-vf", f"scale=-2:{height}", "-f", "image2pipe", "-vcodec", "png", "-"],
+                           capture_output=True, creationflags=NO_WINDOW)
+        if r.stdout:
+            return r.stdout
+    return None
+
+
 # ---------- finding the best moment ----------
 def audio_levels(path: Path) -> np.ndarray:
     """Loudness (RMS) per second."""

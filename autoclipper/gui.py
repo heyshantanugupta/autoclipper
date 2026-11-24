@@ -1,6 +1,7 @@
 """AutoClipper desktop app (tkinter)."""
 from __future__ import annotations
 
+import base64
 import os
 import queue
 import subprocess
@@ -13,7 +14,8 @@ from tkinter import filedialog, messagebox, ttk
 
 from . import __version__, settings as cfg
 from .drafts import PLATFORMS, build_draft
-from .engine import EngineError, Job, Result, make_clip
+from .engine import EngineError, Job, Result, make_clip, thumbnail
+from .presets import PRESETS
 
 try:
     from tkinterdnd2 import DND_FILES, DND_TEXT, TkinterDnD
@@ -21,7 +23,7 @@ try:
 except Exception:  # drag and drop is optional
     HAVE_DND = False
 
-STYLES = {"Framed (zoomed, blurred sides)": "frame", "Full video over blur": "blur", "Fill screen (crop)": "crop"}
+STYLES = {"Framed (zoomed)": "frame", "Full video over blur": "blur", "Fill screen (crop)": "crop"}
 BROWSERS = ["", "firefox", "edge", "chrome", "brave", "opera", "vivaldi"]
 ACCENT = "#2563eb"
 
@@ -98,7 +100,7 @@ class App:
     def __init__(self):
         self.root = TkinterDnD.Tk() if HAVE_DND else tk.Tk()
         self.root.title(f"AutoClipper {__version__}")
-        self.root.geometry("820x900")
+        self.root.geometry("900x920")
         self.root.minsize(760, 760)
         ttk.Style(self.root).theme_use("clam")
         self.settings = cfg.load()
@@ -161,11 +163,15 @@ class App:
         # 3 format
         box = ttk.LabelFrame(body, text="3  Format", padding=8)
         box.pack(fill="x", pady=4)
+        self.preset = tk.StringVar(value="Custom")
+        pre = ttk.Combobox(box, textvariable=self.preset, state="readonly", width=14, values=list(PRESETS))
+        pre.pack(side="left", padx=(0, 8))
+        pre.bind("<<ComboboxSelected>>", self.apply_preset)
         self.aspect = tk.StringVar(value="Short (9:16)")
-        ttk.Combobox(box, textvariable=self.aspect, state="readonly", width=18,
+        ttk.Combobox(box, textvariable=self.aspect, state="readonly", width=15,
                      values=["Short (9:16)", "Widescreen (16:9)"]).pack(side="left")
         self.style = tk.StringVar(value=list(STYLES)[0])
-        ttk.Combobox(box, textvariable=self.style, state="readonly", width=30,
+        ttk.Combobox(box, textvariable=self.style, state="readonly", width=24,
                      values=list(STYLES)).pack(side="left", padx=8)
         self.enhance = tk.BooleanVar(value=True)
         ttk.Checkbutton(box, text="Enhance colors", variable=self.enhance).pack(side="left")
@@ -195,7 +201,7 @@ class App:
         self.bar = ttk.Progressbar(body, mode="indeterminate")
         self.bar.pack(fill="x")
         self.status = tk.StringVar(value="Ready.")
-        ttk.Label(body, textvariable=self.status, wraplength=760, justify="left").pack(anchor="w", pady=4)
+        ttk.Label(body, textvariable=self.status, wraplength=840, justify="left").pack(anchor="w", pady=4)
 
         # 5 drafts
         box = ttk.LabelFrame(body, text="5  Post draft: pick where you're posting", padding=8)
@@ -209,18 +215,30 @@ class App:
             self.pbtns[name] = b
         ttk.Button(pf, text="Show clip in folder", command=self.open_folder).pack(side="right")
         ttk.Button(pf, text="Play clip", command=self.play).pack(side="right", padx=6)
-        tr = ttk.Frame(box)
-        tr.pack(fill="x", pady=(8, 2))
+        mid = ttk.Frame(box)
+        mid.pack(fill="both", expand=True, pady=(8, 0))
+        self.thumb = tk.Label(mid, text="Preview\nappears here", width=18, bg="#eef1f6", fg="#667")
+        self.thumb.pack(side="left", fill="y", padx=(0, 10))
+        right = ttk.Frame(mid)
+        right.pack(side="left", fill="both", expand=True)
+        tr = ttk.Frame(right)
+        tr.pack(fill="x", pady=(0, 2))
         ttk.Label(tr, text="Title").pack(side="left")
         self.draft_title = tk.StringVar()
         ttk.Entry(tr, textvariable=self.draft_title).pack(side="left", fill="x", expand=True, padx=6)
         ttk.Button(tr, text="Copy", command=lambda: self.copy(self.draft_title.get())).pack(side="left")
-        self.draft = tk.Text(box, height=8, wrap="word")
+        self.draft = tk.Text(right, height=8, wrap="word")
         self.draft.pack(fill="both", expand=True, pady=4)
-        bf = ttk.Frame(box)
+        bf = ttk.Frame(right)
         bf.pack(fill="x")
         ttk.Button(bf, text="Copy description", command=lambda: self.copy(self.draft.get("1.0", "end").strip())).pack(side="left")
         ttk.Button(bf, text="Open upload page", command=self.open_upload).pack(side="left", padx=6)
+
+    def apply_preset(self, _=None):
+        p = PRESETS.get(self.preset.get())
+        if p:
+            self.aspect.set("Short (9:16)" if p[0] == "9:16" else "Widescreen (16:9)")
+            self.secs.set(p[1])
 
     # ---------- input helpers ----------
     def browse(self):
@@ -287,6 +305,7 @@ class App:
                     self.go.configure(state="normal")
                     if kind == "ok":
                         self.result = val
+                        self.show_thumb(val.path)
                         self.status.set(f"Done: {val.path.name}. Pick a platform below for your post draft.")
                     else:
                         self.status.set(val)
@@ -294,6 +313,12 @@ class App:
         except queue.Empty:
             pass
         self.root.after(100, self.poll)
+
+    def show_thumb(self, path: Path):
+        png = thumbnail(path)
+        if png:
+            self._img = tk.PhotoImage(data=base64.b64encode(png))
+            self.thumb.configure(image=self._img, text="", width=self._img.width())
 
     # ---------- drafts ----------
     def show_draft(self, platform: str):
